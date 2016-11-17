@@ -1,0 +1,36 @@
+Source: pika
+Maintainer: Gavin M. Roy <gavinmroy@gmail.com>
+Section: python
+Priority: optional
+Build-Depends: python-setuptools (>= 0.6b3), python-all (>= 2.6.6-3), debhelper (>= 7)
+Standards-Version: 3.9.1
+
+
+
+Package: python-pika
+Architecture: all
+Depends: ${misc:Depends}, ${python:Depends}
+Description: Pika Python AMQP Client Library
+ Pika, an AMQP 0-9-1 client library for Python
+ =============================================
+ .
+ |Version| |Downloads| |Status| |Coverage| |License|
+ .
+ Introduction
+ -------------
+ Pika is a pure-Python implementation of the AMQP 0-9-1 protocol that tries
+ to stay fairly independent of the underlying network support library.
+ .
+ - Python 2.6+ and 3.3+ are supported.
+ .
+ - Since threads aren't appropriate to every situation, it doesn't
+   require threads. It takes care not to forbid them, either. The same
+   goes for greenlets, callbacks, continuations and generators. It is
+   not necessarily thread-safe however, and your mileage will vary.
+ .
+ - People may be using direct sockets, plain old `select()`,
+   or any of the wide variety of ways of getting network events to and from a
+   python application. Pika tries to stay compatible with all of these, and to
+
+
+
