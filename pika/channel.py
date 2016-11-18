@@ -6,6 +6,7 @@ import collections
 import logging
 import warnings
 import uuid
+import weakref
 
 import pika.frame as frame
 import pika.exceptions as exceptions
@@ -44,8 +45,7 @@ class Channel(object):
         if not isinstance(channel_number, int):
             raise exceptions.InvalidChannelNumber
         self.channel_number = channel_number
-        self.callbacks = connection.callbacks
-        self.connection = connection
+        self._connection = weakref.ref(connection)
 
         # The frame-handler changes depending on the type of frame processed
         self.frame_dispatcher = ContentFrameDispatcher()
@@ -65,6 +65,16 @@ class Channel(object):
         # opaque cookie value set by wrapper layer (e.g., BlockingConnection)
         # via _set_cookie
         self._cookie = None
+
+    @property
+    def connection(self):
+        """Return the connection this channel belongs to."""
+        return self._connection()
+
+    @property
+    def callbacks(self):
+        """Return the callback manager for this channel."""
+        return self.connection.callbacks
 
     def __int__(self):
         """Return the channel object as its channel number
