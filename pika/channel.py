@@ -65,6 +65,10 @@ class Channel(object):
         # opaque cookie value set by wrapper layer (e.g., BlockingConnection)
         # via _set_cookie
         self._cookie = None
+        LOGGER.debug('Creating channel %d', self.channel_number)
+
+    def __del__(self):
+        LOGGER.debug('Destroying channel %d', self.channel_number)
 
     @property
     def connection(self):
@@ -846,6 +850,7 @@ class Channel(object):
 
     def _cleanup(self):
         """Remove all consumers and any callbacks for the channel."""
+        LOGGER.debug('Cleaning up channel %d', self.channel_number)
         self.callbacks.process(self.channel_number,
                                self._ON_CHANNEL_CLEANUP_CB_KEY, self,
                                self)
