@@ -67,6 +67,13 @@ class Channel(object):
         self._cookie = None
         LOGGER.debug('Creating channel %d', self.channel_number)
 
+    def __repr__(self):
+        return '<%s.%s #%d>' % (
+                self.__class__.__module__,
+                self.__class__.__name__,
+                self.channel_number
+        )
+
     def __del__(self):
         LOGGER.debug('Destroying channel %d', self.channel_number)
 
