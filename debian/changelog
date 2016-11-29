@@ -1,3 +1,10 @@
+pika (0.10.0.1) unstable; urgency=low
+
+  * Weakly reference Connection from Channel objects to prevent garbage
+    collection cycles.
+
+ -- Stuart Longland <stuartl@vrt.com.au>  Wed, 30 Nov 2016 09:20:12 +1000
+
 pika (0.10.0) unstable; urgency=low
 
   * source package automatically created by stdeb 0.8.5
