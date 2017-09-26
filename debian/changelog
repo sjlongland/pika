@@ -1,4 +1,4 @@
-pika (0.10.0.1) unstable; urgency=low
+pika (0.10.0-1) unstable; urgency=low
 
   * Weakly reference Connection from Channel objects to prevent garbage
     collection cycles.
