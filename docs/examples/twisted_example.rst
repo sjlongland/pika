@@ -15,7 +15,7 @@ Example of writing a consumer using the :py:class:`Twisted connection adapter <p
 
         channel = yield connection.channel()
 
-        exchange = yield channel.exchange_declare(exchange='topic_link',type='topic')
+        exchange = yield channel.exchange_declare(exchange='topic_link', exchange_type='topic')
 
         queue = yield channel.queue_declare(queue='hello', auto_delete=False, exclusive=False)
 
@@ -23,7 +23,7 @@ Example of writing a consumer using the :py:class:`Twisted connection adapter <p
 
         yield channel.basic_qos(prefetch_count=1)
 
-        queue_object, consumer_tag = yield channel.basic_consume(queue='hello',no_ack=False)
+        queue_object, consumer_tag = yield channel.basic_consume('hello', auto_ack=False)
 
         l = task.LoopingCall(read, queue_object)
 
@@ -36,7 +36,7 @@ Example of writing a consumer using the :py:class:`Twisted connection adapter <p
         ch,method,properties,body = yield queue_object.get()
 
         if body:
-            print body
+            print(body)
 
         yield ch.basic_ack(delivery_tag=method.delivery_tag)
 

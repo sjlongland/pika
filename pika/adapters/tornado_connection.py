@@ -24,7 +24,6 @@ class TornadoConnection(base_connection.BaseConnection):
     :param custom_ioloop: Override using the global IOLoop in Tornado
 
     """
-    WARN_ABOUT_IOLOOP = True
 
     def __init__(self,
                  parameters=None,
@@ -39,9 +38,10 @@ class TornadoConnection(base_connection.BaseConnection):
         :param pika.connection.Parameters parameters: Connection parameters
         :param on_open_callback: The method to call when the connection is open
         :type on_open_callback: method
-        :param on_open_error_callback: Method to call if the connection cant
-                                       be opened
-        :type on_open_error_callback: method
+        :param method on_open_error_callback: Called if the connection can't
+            be established: on_open_error_callback(connection, str|exception)
+        :param method on_close_callback: Called when the connection is closed:
+            on_close_callback(connection, reason_code, reason_text)
         :param bool stop_ioloop_on_close: Call ioloop.stop() if disconnected
         :param custom_ioloop: Override using the global IOLoop in Tornado
 
@@ -55,7 +55,7 @@ class TornadoConnection(base_connection.BaseConnection):
 
     def _adapter_connect(self):
         """Connect to the remote socket, adding the socket to the IOLoop if
-        connected. 
+        connected.
 
         :rtype: bool
 
@@ -72,18 +72,18 @@ class TornadoConnection(base_connection.BaseConnection):
             self.ioloop.remove_handler(self.socket.fileno())
         super(TornadoConnection, self)._adapter_disconnect()
 
-    def add_timeout(self, deadline, callback_method):
-        """Add the callback_method to the IOLoop timer to fire after deadline
+    def add_timeout(self, deadline, callback):
+        """Add the callback to the IOLoop timer to fire after deadline
         seconds. Returns a handle to the timeout. Do not confuse with
         Tornado's timeout where you pass in the time you want to have your
         callback called. Only pass in the seconds until it's to be called.
 
         :param int deadline: The number of seconds to wait to call callback
-        :param method callback_method: The callback method
+        :param method callback: The callback method
         :rtype: str
 
         """
-        return self.ioloop.add_timeout(time.time() + deadline, callback_method)
+        return self.ioloop.add_timeout(time.time() + deadline, callback)
 
     def remove_timeout(self, timeout_id):
         """Remove the timeout from the IOLoop by the ID returned from

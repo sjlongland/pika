@@ -115,10 +115,14 @@ class HeartbeatChecker(object):
                     self._idle_byte_intervals)
         duration = self._max_idle_count * self._interval
         text = HeartbeatChecker._STALE_CONNECTION % duration
+
+        # NOTE: this won't achieve the perceived effect of sending
+        # Connection.Close to broker, because the frame will only get buffered
+        # in memory before the next statement terminates the connection.
         self._connection.close(HeartbeatChecker._CONNECTION_FORCED, text)
-        self._connection._adapter_disconnect()
-        self._connection._on_disconnect(HeartbeatChecker._CONNECTION_FORCED,
-                                        text)
+
+        self._connection._on_terminate(HeartbeatChecker._CONNECTION_FORCED,
+                                       text)
 
     @property
     def _has_received_data(self):
@@ -129,7 +133,8 @@ class HeartbeatChecker(object):
         """
         return not self._bytes_received == self.bytes_received_on_connection
 
-    def _new_heartbeat_frame(self):
+    @staticmethod
+    def _new_heartbeat_frame():
         """Return a new heartbeat frame.
 
         :rtype pika.frame.Heartbeat

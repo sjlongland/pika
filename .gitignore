@@ -4,9 +4,11 @@
 .coverage
 .tox
 .DS_Store
+.python-version
 pika.iml
 codegen
 pika.egg-info
+debug/
 examples/pika
 examples/blocking/pika
 atlassian*xml
@@ -14,3 +16,5 @@ build
 dist
 docs/_build
 *.conf.in
+venv*/
+env/

@@ -2,10 +2,13 @@
 import struct
 import decimal
 import calendar
+import warnings
+
 from datetime import datetime
 
 from pika import exceptions
-from pika.compat import unicode_type, PY2, long, as_bytes
+from pika.compat import PY2, PY3
+from pika.compat import unicode_type, long, as_bytes
 
 
 def encode_short_string(pieces, value):
@@ -62,7 +65,11 @@ else:
         """
         length = struct.unpack_from('B', encoded, offset)[0]
         offset += 1
-        value = encoded[offset:offset + length].decode('utf8')
+        value = encoded[offset:offset + length]
+        try:
+            value = value.decode('utf8')
+        except UnicodeDecodeError:
+            pass
         offset += length
         return value, offset
 
@@ -119,8 +126,16 @@ def encode_value(pieces, value):
         pieces.append(struct.pack('>cq', b'l', value))
         return 9
     elif isinstance(value, int):
-        pieces.append(struct.pack('>ci', b'I', value))
-        return 5
+        with warnings.catch_warnings():
+            warnings.filterwarnings('error')
+            try:
+                p = struct.pack('>ci', b'I', value)
+                pieces.append(p)
+                return 5
+            except (struct.error, DeprecationWarning):
+                p = struct.pack('>cq', b'l', long(value))
+                pieces.append(p)
+                return 9
     elif isinstance(value, decimal.Decimal):
         value = value.normalize()
         if value.as_tuple().exponent < 0:
@@ -259,7 +274,11 @@ def decode_value(encoded, offset):
     elif kind == b'S':
         length = struct.unpack_from('>I', encoded, offset)[0]
         offset += 4
-        value = encoded[offset:offset + length].decode('utf8')
+        value = encoded[offset:offset + length]
+        try:
+            value = value.decode('utf8')
+        except UnicodeDecodeError:
+            pass
         offset += length
 
     # Field Array

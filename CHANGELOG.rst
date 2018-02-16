@@ -1,5 +1,95 @@
+Version History
+===============
+
+1.0.0b1 2018-02-01
+------------------
+
+`GitHub milestone <https://github.com/pika/pika/milestone/8>`_
+
+- `BlockingConnection.consume` now returns `(None, None, None)` when inactivity timeout is reached (`PR <https://github.com/pika/pika/pull/899>`_)
+
+0.11.2 2017-11-30
+-----------------
+
+`GitHub milestone <https://github.com/pika/pika/milestone/11>`_
+
+`0.11.2 <https://github.com/pika/pika/compare/0.11.1...0.11.2>`_
+
+- Remove `+` character from platform releases string (`PR <https://github.com/pika/pika/pull/895>`_)
+
+0.11.1 2017-11-27
+-----------------
+
+`GitHub milestone <https://github.com/pika/pika/milestone/10>`_
+
+`0.11.1 <https://github.com/pika/pika/compare/0.11.0...0.11.1>`_
+
+- Fix `BlockingConnection` to ensure event loop exits (`PR <https://github.com/pika/pika/pull/887>`_)
+- Heartbeat timeouts will use the client value if specified (`PR <https://github.com/pika/pika/pull/874>`_)
+- Allow setting some common TCP options (`PR <https://github.com/pika/pika/pull/880>`_)
+- Errors when decoding Unicode are ignored (`PR <https://github.com/pika/pika/pull/890>`_)
+- Fix large number encoding (`PR <https://github.com/pika/pika/pull/888>`_)
+
+0.11.0 2017-07-29
+-----------------
+
+`GitHub milestone <https://github.com/pika/pika/milestone/9>`_
+
+`0.11.0 <https://github.com/pika/pika/compare/0.10.0...0.11.0>`_
+
+ - Simplify Travis CI configuration for OS X.
+ - Add `asyncio` connection adapter for Python 3.4 and newer.
+ - Connection failures that occur after the socket is opened and before the
+   AMQP connection is ready to go are now reported by calling the connection
+   error callback.  Previously these were not consistently reported.
+ - In BaseConnection.close, call _handle_ioloop_stop only if the connection is
+   already closed to allow the asynchronous close operation to complete
+   gracefully.
+ - Pass error information from failed socket connection to user callbacks
+   on_open_error_callback and on_close_callback with result_code=-1.
+ - ValueError is raised when a completion callback is passed to an asynchronous
+   (nowait) Channel operation. It's an application error to pass a non-None
+   completion callback with an asynchronous request, because this callback can
+   never be serviced in the asynchronous scenario.
+ - `Channel.basic_reject` fixed to allow `delivery_tag` to be of type `long`
+   as well as `int`. (by quantum5)
+ - Implemented support for blocked connection timeouts in
+   `pika.connection.Connection`. This feature is available to all pika adapters.
+   See `pika.connection.ConnectionParameters` docstring to learn more about
+   `blocked_connection_timeout` configuration.
+ - Deprecated the `heartbeat_interval` arg in `pika.ConnectionParameters` in
+   favor of the `heartbeat` arg for consistency with the other connection
+   parameters classes `pika.connection.Parameters` and `pika.URLParameters`.
+ - When the `port` arg is not set explicitly in `ConnectionParameters`
+   constructor, but the `ssl` arg is set explicitly, then set the port value to
+   to the default AMQP SSL port if SSL is enabled, otherwise to the default
+   AMQP plaintext port.
+ - `URLParameters` will raise ValueError if a non-empty URL scheme other than
+   {amqp | amqps | http | https} is specified.
+ - `InvalidMinimumFrameSize` and `InvalidMaximumFrameSize` exceptions are
+   deprecated. pika.connection.Parameters.frame_max property setter now raises
+   the standard `ValueError` exception when the value is out of bounds.
+ - Removed deprecated parameter `type` in `Channel.exchange_declare` and
+   `BlockingChannel.exchange_declare` in favor of the `exchange_type` arg that
+   doesn't overshadow the builtin `type` keyword.
+ - Channel.close() on OPENING channel transitions it to CLOSING instead of
+   raising ChannelClosed.
+ - Channel.close() on CLOSING channel raises `ChannelAlreadyClosing`; used to
+   raise `ChannelClosed`.
+ - Connection.channel() raises `ConnectionClosed` if connection is not in OPEN
+   state.
+ - When performing graceful close on a channel and `Channel.Close` from broker
+   arrives while waiting for CloseOk, don't release the channel number until
+   CloseOk arrives to avoid race condition that may lead to a new channel
+   receiving the CloseOk that was destined for the closing channel.
+ - The `backpressure_detection` option of `ConnectionParameters` and
+   `URLParameters` property is DEPRECATED in favor of `Connection.Blocked` and
+   `Connection.Unblocked`. See `Connection.add_on_connection_blocked_callback`.
+
 0.10.0 2015-09-02
 -----------------
+
+`0.10.0 <https://github.com/pika/pika/compare/0.9.14...0.10.0>`_
 
  - a9bf96d - LibevConnection: Fixed dict chgd size during iteration (Michael Laing)
  - 388c55d - SelectConnection: Fixed KeyError exceptions in IOLoop timeout executions (Shinji Suzuki)
@@ -41,7 +131,7 @@ parameters channel, method, properties, and body instead of a tuple of those
 values for congruence with other similar callbacks.
 
 `BlockingConnection`: This adapter underwent a makeover under the hood and
-gained significant performance improvements as well as ehnanced timer
+gained significant performance improvements as well as enhanced timer
 resolution. It is now implemented as a client of the `SelectConnection` adapter.
 
 Below is an overview of the `BlockingConnection` and `BlockingChannel` API
@@ -102,6 +192,9 @@ changes:
   - `BlockingChannel.open`: removed in favor of having a single mechanism for
     creating a channel (`BlockingConnection.channel`); this reduces maintenance
     burden, while improving reliability of the adapter.
+  - `BlockingChannel.confirm_delivery`: raises UnroutableError when unroutable
+    messages that were sent prior to this call are returned before we receive
+    Confirm.Select-ok.
   - `BlockingChannel.basic_publish: always returns True when delivery
     confirmation is not enabled (publisher-acks = off); the legacy implementation
     returned a bool in this case if `mandatory=True` to indicate whether the
@@ -225,6 +318,8 @@ changes:
 
 0.9.14 - 2014-07-11
 -------------------
+
+`0.9.14 <https://github.com/pika/pika/compare/0.9.13...0.9.14>`_
 
  - 57fe43e - fix test to generate a correct range of random ints (ml)
  - 0d68dee - fix async watcher for libev_connection (ml)
@@ -365,6 +460,9 @@ changes:
 
 0.9.13 - 2013-05-15
 -------------------
+
+`0.9.13 <https://github.com/pika/pika/compare/0.9.12...0.9.13>`_
+
 **Major Changes**
 
 - IPv6 Support with thanks to Alessandro Tagliapietra for initial prototype
@@ -404,12 +502,16 @@ changes:
 0.9.12 - 2013-03-18
 -------------------
 
+`0.9.12 <https://github.com/pika/pika/compare/0.9.11...0.9.12>`_
+
 **Bugfixes**
 
 - New timeout id hashing was not unique
 
 0.9.11 - 2013-03-17
 -------------------
+
+`0.9.11 <https://github.com/pika/pika/compare/0.9.10...0.9.11>`_
 
 **Bugfixes**
 
@@ -421,6 +523,8 @@ changes:
 
 0.9.10 - 2013-03-16
 -------------------
+
+`0.9.10 <https://github.com/pika/pika/compare/0.9.9...0.9.10>`_
 
 **Bugfixes**
 
@@ -456,6 +560,8 @@ changes:
 0.9.9 - 2013-01-29
 ------------------
 
+`0.9.9 <https://github.com/pika/pika/compare/0.9.8...0.9.9>`_
+
 **Bugfixes**
 
 - Only remove the tornado_connection.TornadoConnection file descriptor from the IOLoop if it's still open (Issue #221)
@@ -479,6 +585,8 @@ changes:
 0.9.8 - 2012-11-18
 ------------------
 
+`0.9.8 <https://github.com/pika/pika/compare/0.9.7...0.9.8>`_
+
 **Bugfixes**
 
 - Channel.queue_declare/BlockingChannel.queue_declare not setting up callbacks property for empty queue name (Issue #218)
@@ -488,6 +596,8 @@ changes:
 
 0.9.7 - 2012-11-11
 ------------------
+
+`0.9.7 <https://github.com/pika/pika/compare/0.9.6...0.9.7>`_
 
 **New features**
 
@@ -511,6 +621,8 @@ changes:
 
 0.9.6 - 2012-10-29
 ------------------
+
+`0.9.6 <https://github.com/pika/pika/compare/0.9.5...0.9.6>`_
 
 **New features**
 
@@ -536,6 +648,8 @@ changes:
 
 0.9.5 - 2011-03-29
 ------------------
+
+`0.9.5 <https://github.com/pika/pika/compare/0.9.4...0.9.5>`_
 
 **Changelog**
 
