@@ -16,6 +16,7 @@ import functools
 from twisted.internet import defer, error, reactor
 from twisted.python import log
 
+from pika import connection
 from pika import exceptions
 from pika.adapters import base_connection
 
@@ -100,11 +101,14 @@ class TwistedChannel(object):
 
         queue = ClosableDeferredQueue()
         queue_name = kwargs['queue']
-        kwargs['consumer_callback'] = lambda *args: queue.put(args)
+        kwargs['callback'] = lambda *args: queue.put(args)
         self.__consumers.setdefault(queue_name, set()).add(queue)
 
         try:
             consumer_tag = self.__channel.basic_consume(*args, **kwargs)
+        # TODO this except without types would suppress system-exiting
+        # exceptions, such as SystemExit and KeyboardInterrupt. It should be at
+        # least `except Exception` and preferably more specific.
         except:
             return defer.fail()
 
@@ -163,6 +167,9 @@ class TwistedChannel(object):
 
             try:
                 method(*args, **kwargs)
+            # TODO this except without types would suppress system-exiting
+            # exceptions, such as SystemExit and KeyboardInterrupt. It should be
+            # at least `except Exception` and preferably more specific.
             except:
                 return defer.fail()
             return d
@@ -197,18 +204,18 @@ class IOLoopReactorAdapter(object):
         self.reactor = reactor
         self.started = False
 
-    def add_timeout(self, deadline, callback_method):
-        """Add the callback_method to the IOLoop timer to fire after deadline
+    def add_timeout(self, deadline, callback):
+        """Add the callback to the IOLoop timer to fire after deadline
         seconds. Returns a handle to the timeout. Do not confuse with
         Tornado's timeout where you pass in the time you want to have your
         callback called. Only pass in the seconds until it's to be called.
 
         :param int deadline: The number of seconds to wait to call callback
-        :param method callback_method: The callback method
+        :param method callback: The callback method
         :rtype: twisted.internet.interfaces.IDelayedCall
 
         """
-        return self.reactor.callLater(deadline, callback_method)
+        return self.reactor.callLater(deadline, callback)
 
     def remove_timeout(self, call):
         """Remove a call
@@ -300,13 +307,6 @@ class TwistedConnection(base_connection.BaseConnection):
         self.ioloop.remove_handler(None)
         self._cleanup_socket()
 
-    def _handle_disconnect(self):
-        """Do not stop the reactor, this would cause the entire process to exit,
-        just fire the disconnect callbacks
-
-        """
-        self._on_connection_closed(None, True)
-
     def _on_connected(self):
         """Call superclass and then update the event state to flush the outgoing
         frame out. Commit 50d842526d9f12d32ad9f3c4910ef60b8c301f59 removed a
@@ -323,7 +323,7 @@ class TwistedConnection(base_connection.BaseConnection):
 
         """
         d = defer.Deferred()
-        base_connection.BaseConnection.channel(self, d.callback, channel_number)
+        base_connection.BaseConnection.channel(self, channel_number, d.callback)
         return d.addCallback(TwistedChannel)
 
     # IReadWriteDescriptor methods
@@ -339,7 +339,8 @@ class TwistedConnection(base_connection.BaseConnection):
         if not reason.check(error.ConnectionDone):
             log.err(reason)
 
-        self._handle_disconnect()
+        self._on_terminate(connection.InternalCloseReasons.SOCKET_ERROR,
+                           str(reason))
 
     def doRead(self):
         self._handle_read()
@@ -366,13 +367,13 @@ class TwistedProtocolConnection(base_connection.BaseConnection):
 
     """
 
-    def __init__(self, parameters):
+    def __init__(self, parameters=None, on_close_callback=None):
         self.ready = defer.Deferred()
         super(TwistedProtocolConnection, self).__init__(
             parameters=parameters,
             on_open_callback=self.connectionReady,
             on_open_error_callback=self.connectionFailed,
-            on_close_callback=None,
+            on_close_callback=on_close_callback,
             ioloop=IOLoopReactorAdapter(self, reactor),
             stop_ioloop_on_close=False)
 
@@ -413,7 +414,7 @@ class TwistedProtocolConnection(base_connection.BaseConnection):
 
         """
         d = defer.Deferred()
-        base_connection.BaseConnection.channel(self, d.callback, channel_number)
+        base_connection.BaseConnection.channel(self, channel_number, d.callback)
         return d.addCallback(TwistedChannel)
 
     # IProtocol methods

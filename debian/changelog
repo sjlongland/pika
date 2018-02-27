@@ -1,3 +1,7 @@
+pika (0.99.0) unstable; urgency=low
+  * Pull upstream release 1.0.0b1 to address issues with handling channel.close.
+ -- Stuart Longland <stuartl@vrt.com.au>  Fri, 16 Feb 2018 15:22:01 +1000
+
 pika (0.10.0-1) unstable; urgency=low
 
   * Weakly reference Connection from Channel objects to prevent garbage

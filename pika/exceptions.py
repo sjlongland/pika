@@ -18,7 +18,7 @@ class AMQPConnectionError(AMQPError):
                 return ('No connection could be opened after %s '
                         'connection attempts' % self.args[0])
             else:
-                return ('No connection could be opened: %s' % self.args[0])
+                return 'No connection could be opened: %s' % self.args[0]
         elif len(self.args) == 2:
             return '%s: %s' % (self.args[0], self.args[1])
 
@@ -26,7 +26,8 @@ class AMQPConnectionError(AMQPError):
 class IncompatibleProtocolError(AMQPConnectionError):
 
     def __repr__(self):
-        return 'The protocol returned by the server is not supported'
+        return ('The protocol returned by the server is not supported: %s' %
+                (self.args,))
 
 
 class AuthenticationError(AMQPConnectionError):
@@ -40,14 +41,15 @@ class ProbableAuthenticationError(AMQPConnectionError):
 
     def __repr__(self):
         return ('Client was disconnected at a connection stage indicating a '
-                'probable authentication error')
+                'probable authentication error: %s' % (self.args,))
 
 
 class ProbableAccessDeniedError(AMQPConnectionError):
 
     def __repr__(self):
         return ('Client was disconnected at a connection stage indicating a '
-                'probable denial of access to the specified virtual host')
+                'probable denial of access to the specified virtual host: %s' %
+                (self.args,))
 
 
 class NoFreeChannels(AMQPConnectionError):
@@ -80,6 +82,11 @@ class ChannelClosed(AMQPChannelError):
                                                        self.args[1])
         else:
             return 'The channel was closed: %s' % (self.args,)
+
+
+class ChannelAlreadyClosing(AMQPChannelError):
+    """Raised when `Channel.close` is called while channel is already closing"""
+    pass
 
 
 class DuplicateConsumerTag(AMQPChannelError):
@@ -210,12 +217,18 @@ class ChannelError(Exception):
 
 
 class InvalidMinimumFrameSize(ProtocolSyntaxError):
+    """ DEPRECATED; pika.connection.Parameters.frame_max property setter now
+    raises the standard `ValueError` exception when the value is out of bounds.
+    """
 
     def __repr__(self):
         return 'AMQP Minimum Frame Size is 4096 Bytes'
 
 
 class InvalidMaximumFrameSize(ProtocolSyntaxError):
+    """ DEPRECATED; pika.connection.Parameters.frame_max property setter now
+    raises the standard `ValueError` exception when the value is out of bounds.
+    """
 
     def __repr__(self):
         return 'AMQP Maximum Frame Size is 131072 Bytes'
@@ -235,3 +248,10 @@ class ShortStringTooLong(AMQPError):
     def __repr__(self):
         return ('AMQP Short String can contain up to 255 bytes: '
                 '%.300s' % self.args[0])
+
+
+class DuplicateGetOkCallback(ChannelError):
+
+    def __repr__(self):
+        return ('basic_get can only be called again after the callback for the'
+                'previous basic_get is executed')

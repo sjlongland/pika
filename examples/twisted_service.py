@@ -6,7 +6,7 @@
 #  - Post by Brian Chandler
 #    https://groups.google.com/forum/#!topic/pika-python/o_deVmGondk
 #  - Pika Documentation
-#    http://pika.readthedocs.org/en/latest/examples/twisted_example.html
+#    https://pika.readthedocs.io/en/latest/examples/twisted_example.html
 
 
 Fire up this test application via `twistd -ny twisted_service.py`
@@ -90,11 +90,11 @@ class PikaProtocol(twisted_connection.TwistedProtocolConnection):
     def setup_read(self, exchange, routing_key, callback):
         """This function does the work to read from an exchange."""
         if not exchange == '':
-            yield self.channel.exchange_declare(exchange=exchange, type='topic', durable=True, auto_delete=False)
+            yield self.channel.exchange_declare(exchange=exchange, exchange_type='topic', durable=True, auto_delete=False)
 
         self.channel.queue_declare(queue=routing_key, durable=True)
 
-        (queue, consumer_tag,) = yield self.channel.basic_consume(queue=routing_key, no_ack=False)
+        (queue, consumer_tag,) = yield self.channel.basic_consume(queue=routing_key, auto_ack=False)
         d = queue.get()
         d.addCallback(self._read_item, queue, callback)
         d.addErrback(self._read_item_err)
@@ -127,7 +127,7 @@ class PikaProtocol(twisted_connection.TwistedProtocolConnection):
     def send_message(self, exchange, routing_key, msg):
         """Send a single message."""
         log.msg('%s (%s): %s' % (exchange, routing_key, repr(msg)), system='Pika:=>')
-        yield self.channel.exchange_declare(exchange=exchange, type='topic', durable=True, auto_delete=False)
+        yield self.channel.exchange_declare(exchange=exchange, exchange_type='topic', durable=True, auto_delete=False)
         prop = spec.BasicProperties(delivery_mode=2)
         try:
             yield self.channel.basic_publish(exchange=exchange, routing_key=routing_key, body=msg, properties=prop)
